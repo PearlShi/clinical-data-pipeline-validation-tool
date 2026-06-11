@@ -1,0 +1,203 @@
+# ============================================================================
+# 校验规则配置文件
+# ============================================================================
+# 修改此文件可自定义校验逻辑，无需修改核心代码
+# 支持不同试验项目的个性化需求配置
+
+# =====================
+# 必填变量检查
+# =====================
+required_variables:
+  enabled: true           # 是否启用该检查
+  variables:              # 必填变量列表
+    - USUBJID             # 受试者唯一标识
+    - STUDYID             # 研究编号
+    - DOMAIN              # 数据域
+    - SUBJID              # 受试者编号
+    - SITEID              # 研究中心编号
+    - RFSTDTC             # 首次给药/研究日期
+    - RFENDTC             # 末次给药/研究日期
+  name_pattern: "^[A-Z][A-Z0-9_]*$"   # 变量名命名规范(正则)
+
+# =====================
+# 日期校验配置
+# =====================
+date_checks:
+  enabled: true
+  format: "%Y-%m-%d"                  # 标准日期格式
+  variables:                          # 需检查的日期变量
+    - RFSTDTC
+    - RFENDTC
+    - AESTDTC
+    - AEENDTC
+    - LB_DTC
+    - VS_DTC
+    - EX_DTC
+    - MH_STDTC
+    - CM_STDTC
+    - DS_DTC
+    - BRTHDTC
+
+# =====================
+# 取值范围校验
+# =====================
+value_ranges:
+  AGE:
+    min: 0
+    max: 120
+    description: "年龄范围(岁)"
+  WEIGHT:
+    min: 1.0
+    max: 300.0
+    description: "体重范围(kg)"
+  HEIGHT:
+    min: 30.0
+    max: 250.0
+    description: "身高范围(cm)"
+  BMI:
+    min: 10.0
+    max: 60.0
+    description: "BMI范围(kg/m²)"
+  VISITNUM:
+    min: 1
+    max: 999
+    description: "访视编号范围"
+  EPOCH:
+    min: 1
+    max: 99
+    description: "试验阶段编号"
+
+# =====================
+# 分类变量取值映射
+# =====================
+category_mappings:
+  SEX:
+    valid_values:
+      - "M"
+      - "F"
+      - "男"
+      - "女"
+      - "Male"
+      - "Female"
+    description: "性别"
+  RACE:
+    valid_values:
+      - "ASIAN"
+      - "BLACK OR AFRICAN AMERICAN"
+      - "WHITE"
+      - "AMERICAN INDIAN OR ALASKA NATIVE"
+      - "NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER"
+      - "OTHER"
+      - "MULTIPLE"
+      - "NOT REPORTED"
+      - "UNKNOWN"
+    description: "种族"
+  ETHNIC:
+    valid_values:
+      - "HISPANIC OR LATINO"
+      - "NOT HISPANIC OR LATINO"
+      - "NOT REPORTED"
+      - "UNKNOWN"
+    description: "民族"
+  ARM:
+    valid_values:
+      - "PLACEBO"
+      - "TREATMENT_10MG"
+      - "TREATMENT_20MG"
+      - "ACTIVE_COMPARATOR"
+      - "SCREENING_FAILURE"
+      - "NOT_ASSIGNED"
+    description: "试验分组"
+  AESEV:
+    valid_values:
+      - "MILD"
+      - "MODERATE"
+      - "SEVERE"
+      - "DEATH"
+    description: "不良事件严重程度"
+  AESER:
+    valid_values:
+      - "Y"
+      - "N"
+    description: "严重不良事件标志"
+  AEREL:
+    valid_values:
+      - "NOT RELATED"
+      - "POSSIBLE"
+      - "PROBABLE"
+      - "DEFINITE"
+    description: "不良事件相关性"
+
+# =====================
+# SDTM 合规性校验
+# =====================
+sdtm:
+  enabled: true
+  standard_domains:
+    - DM
+    - AE
+    - VS
+    - LB
+    - EX
+    - MH
+    - CM
+    - DS
+    - SC
+    - SS
+    - MH
+    - EG
+    - IE
+    - TA
+    - TV
+    - SE
+    - SUPPAE
+    - RELREC
+  usubjid_pattern: "^[A-Z0-9]{3,20}-[A-Z0-9]{3,10}-[A-Z0-9]{3,10}$"
+  studyid_pattern: "^[A-Z0-9]{3,20}$"
+  domain_pattern: "^(DM|AE|VS|LB|EX|MH|CM|DS|SC|SS|MH|EG|IE|TA|TV|SE)$"
+  time_var_suffixes:
+    - "DTC"
+    - "STDTC"
+    - "ENDTC"
+
+# =====================
+# 逻辑校验规则
+# =====================
+logic_checks:
+  enabled: true
+  rules:
+    # 入组日期不晚于末次给药日期
+    - name: "RFSTDTC <= RFENDTC"
+      description: "入组/首次给药日期应早于或等于末次给药日期"
+      type: "date_comparison"
+      var1: "RFSTDTC"
+      var2: "RFENDTC"
+      constraint: "var1 <= var2"
+
+    # 出生日期早于所有其他日期
+    - name: "BRTHDTC before all dates"
+      description: "出生日期应早于所有其他记录日期"
+      type: "date_earliest"
+
+    # 不良事件开始日期不晚于结束日期
+    - name: "AESTDTC <= AEENDTC"
+      description: "不良事件开始日期应早于或等于结束日期"
+      type: "date_comparison"
+      var1: "AESTDTC"
+      var2: "AEENDTC"
+      constraint: "var1 <= var2"
+
+    # 年龄与出生日期逻辑一致性
+    - name: "AGE positive"
+      description: "年龄应为正数"
+      type: "range"
+      var: "AGE"
+      min: 0
+
+# =====================
+# 报告配置
+# =====================
+report:
+  max_issues_per_check: 1000    # 每项检查最多输出问题数
+  include_passed_checks: false  # 是否包含通过项
+  detail_level: "detailed"      # detailed / summary
