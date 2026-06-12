@@ -272,8 +272,8 @@ python tests/run_verification.py
 
 MIT License
 
-Copyright (c) 2026 BeiGene AI Engineering Intern Project
+Copyright (c) 2026 Personal Technical Demo Project
 
 ---
 
-*本工具为 BeiGene AI Engineering Intern 面试项目，用于临床研究数据质量的自动化管理。*
+*本项目为个人技术学习演示项目，仅用于技术学习、项目面试展示使用。*
